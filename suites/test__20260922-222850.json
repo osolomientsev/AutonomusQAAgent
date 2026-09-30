@@ -1,0 +1,38 @@
+{
+  "id": "test__20260922-222850",
+  "name": "test",
+  "url": "https://www.ninjasloth.net",
+  "cases": [
+    {
+      "id": "tc1",
+      "title": "Contact Form Submission",
+      "goal": "Fill the contact form with sample data and verify the 'Надіслати заявку' button triggers submission (check if focus moves to next element or page navigation occurs).",
+      "reset_before": true
+    },
+    {
+      "id": "tc2",
+      "title": "Language Selector Functionality",
+      "goal": "Select 'ru' from the 'Мова' combobox and verify the page content updates to Russian.",
+      "reset_before": true
+    },
+    {
+      "id": "tc3",
+      "title": "Demo Link Navigation",
+      "goal": "Click the 'Відкрити демо' link under the PS Moldova demo and verify the URL changes to https://psmoldova.ninjasloth.net.",
+      "reset_before": true
+    },
+    {
+      "id": "tc4",
+      "title": "Navigation Link Scrolling",
+      "goal": "Click the 'Процес' navigation link and verify the page scrolls to the 'Процес' region section.",
+      "reset_before": true
+    },
+    {
+      "id": "tc5",
+      "title": "Scene Slider Navigation",
+      "goal": "Click 'Наступна сцена' and verify the scene changes from 'Студія' to 'Демо' (check paragraph text updates to '02 · Живі демо').",
+      "reset_before": true
+    }
+  ],
+  "created_at": "2026-09-22T22:28:50.103312"
+}

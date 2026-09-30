@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Autonomous QA Agent</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Autonomous QA Agent</h1>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar">
+      <h2>Suites</h2>
+      <ul id="suites-list"></ul>
+
+      <h2>Past runs</h2>
+      <ul id="runs-list"></ul>
+      <button type="button" id="compare-button" hidden>Compare selected</button>
+    </aside>
+
+    <main>
+      <form id="run-form">
+        <label>
+          Page URL
+          <div class="url-row">
+            <select name="url_scheme">
+              <option value="https://">https://</option>
+              <option value="http://">http://</option>
+              <option value="file://">file://</option>
+            </select>
+            <input type="text" name="url_rest" placeholder="example.com" required />
+          </div>
+        </label>
+
+        <input type="hidden" name="provider" id="provider-hidden" value="ollama" />
+        <div class="row">
+          <label class="switch-field">
+            Model source
+            <span class="switch-row">
+              <span class="switch-label">Local</span>
+              <label class="switch">
+                <input type="checkbox" id="cloud-toggle" />
+                <span class="switch-slider"></span>
+              </label>
+              <span class="switch-label">Cloud</span>
+            </span>
+          </label>
+          <label id="cloud-provider-field" hidden>
+            Cloud provider
+            <select id="cloud-provider-select">
+              <option value="claude">Claude (Anthropic API)</option>
+              <option value="openai">OpenAI-compatible</option>
+            </select>
+          </label>
+          <label id="model-select-field">
+            Model
+            <select name="model_select"></select>
+          </label>
+          <label id="model-text-field" hidden>
+            Model
+            <input
+              type="text"
+              name="model_text"
+              autocomplete="off"
+              placeholder="e.g. gpt-4o, o4-mini — check your provider's docs"
+            />
+          </label>
+          <label>
+            Browser
+            <select name="channel">
+              <option value="chrome">Chrome (system)</option>
+              <option value="msedge">Edge (system)</option>
+              <option value="chromium">Chromium (Playwright)</option>
+            </select>
+          </label>
+        </div>
+        <div id="claude-fields" hidden>
+          <label>
+            Anthropic API key
+            <div class="key-row">
+              <input type="password" name="claude_api_key" autocomplete="off" placeholder="sk-ant-..." />
+              <button type="button" class="clear-key" data-provider="claude">Clear</button>
+            </div>
+          </label>
+          <p id="claude-key-status" class="field-hint"></p>
+          <label>
+            Workspace ID (only if the key isn't scoped to one)
+            <input type="text" name="claude_workspace_id" autocomplete="off" placeholder="wrkspc_..." />
+          </label>
+          <p class="field-hint">
+            Only needed if a run fails with "API key is not scoped to a workspace" - find the
+            workspace ID in the Anthropic Console under that workspace's settings.
+          </p>
+        </div>
+        <div id="openai-fields" hidden>
+          <label>
+            Base URL (optional)
+            <input
+              type="text"
+              name="openai_base_url"
+              placeholder="Leave empty for https://api.openai.com/v1, or point at any OpenAI-compatible endpoint"
+            />
+          </label>
+          <label>
+            API key
+            <div class="key-row">
+              <input type="password" name="openai_api_key" autocomplete="off" placeholder="sk-..." />
+              <button type="button" class="clear-key" data-provider="openai">Clear</button>
+            </div>
+          </label>
+          <p id="openai-key-status" class="field-hint"></p>
+        </div>
+
+        <div class="row">
+          <label>
+            Max test cases
+            <input type="number" name="max_cases" value="6" min="1" max="50" />
+          </label>
+          <label>
+            Max steps per case
+            <input type="number" name="max_steps" value="10" min="1" max="50" />
+          </label>
+          <label id="num-ctx-field">
+            Model context (num_ctx)
+            <input type="number" name="num_ctx" value="16384" min="2048" step="1024" />
+          </label>
+        </div>
+
+        <label>
+          Note to the agent (optional)
+          <textarea name="focus_hint" rows="2" placeholder="e.g. focus on the checkout form and field validation"></textarea>
+        </label>
+
+        <label>
+          Precondition (optional, e.g. log in)
+          <textarea name="precondition" rows="2" placeholder="e.g. log in with username demo and password demo123 via the login form"></textarea>
+        </label>
+
+        <div class="row checkboxes">
+          <label class="checkbox">
+            <input type="checkbox" name="show_browser" />
+            Show browser window
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="auto_confirm_destructive" />
+            Auto-confirm destructive actions
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="review" />
+            Review test cases before running
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="fresh_browser_per_case" />
+            Fresh browser per test case
+          </label>
+        </div>
+
+        <details id="advanced-settings">
+          <summary>Advanced settings</summary>
+          <label>
+            Planner prompt (empty = default)
+            <div class="prompt-row">
+              <textarea name="planner_prompt" rows="4" placeholder="Leave empty to use the built-in prompt"></textarea>
+              <button type="button" class="load-default" data-target="planner_prompt">Load default text</button>
+            </div>
+          </label>
+          <label>
+            Executor prompt (empty = default)
+            <div class="prompt-row">
+              <textarea name="executor_prompt" rows="4" placeholder="Leave empty to use the built-in prompt"></textarea>
+              <button type="button" class="load-default" data-target="executor_prompt">Load default text</button>
+            </div>
+          </label>
+        </details>
+
+        <div class="row">
+          <button type="submit" id="run-button">Run</button>
+          <button type="button" id="stop-button" hidden>Stop</button>
+          <button type="button" id="approve-button" hidden>Approve &amp; run</button>
+          <button type="button" id="save-suite-review" hidden>Save as suite</button>
+        </div>
+      </form>
+
+      <section id="log-panel">
+        <h2>Log</h2>
+        <div id="log"></div>
+      </section>
+
+      <section id="results-panel">
+        <div class="panel-header">
+          <h2>Results</h2>
+          <button type="button" id="save-suite-results" hidden>Save as suite</button>
+        </div>
+        <div id="results"></div>
+      </section>
+
+      <section id="diff-panel" hidden>
+        <h2>Comparison</h2>
+        <div id="diff-results"></div>
+      </section>
+
+      <section id="suite-panel" hidden>
+        <div class="panel-header">
+          <h2>Suite</h2>
+          <button type="button" id="save-suite-changes">Save changes</button>
+        </div>
+        <div class="suite-meta-edit">
+          <input type="text" id="suite-panel-name" placeholder="Suite name" />
+          <input type="text" id="suite-panel-url" placeholder="URL" />
+        </div>
+        <div id="suite-cases"></div>
+        <button type="button" id="add-suite-case" class="add-case-inline">+ Add case</button>
+        <h3>Runs from this suite</h3>
+        <ul id="suite-runs-list"></ul>
+        <p id="suite-runs-empty" class="diff-empty" hidden>No runs yet.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
